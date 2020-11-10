@@ -1,9 +1,9 @@
-#include "simlib.h"
-#include <iostream>
+#include "main.h"
 
 
 int main(void){
 
+    Init(START_TIME, END_TIME);
     
     Run();
 
