@@ -17,11 +17,23 @@
  */
 #include "simlib.h"
 #include <iostream>
+#include <math.h>
+#include <getopt.h>
+#include <string> 
+#include <fstream>
 
 /**
  * Macros
  */
  #define START_TIME 0
  #define END_TIME 100
+
+
+/**
+ * Functions
+ */
+ void parseArgs(int argc, char **argv);
+ void calculateSIR();
+ void print_help();
 
  #endif //_MAIN_H_
