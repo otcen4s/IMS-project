@@ -21,6 +21,7 @@ Linky:
 [Zaujimavy odkaz 8](https://math.ucr.edu/home/baez/networks/networks_3.html)<br/>
 [Zaujimavy odkaz 9](https://www.youtube.com/watch?v=yRxe-QycdUE)<br/>
 https://natureofcode.com/book/chapter-7-cellular-automata/<br/>
+https://mathinsight.org/discrete_sir_infectious_disease_model</br>
 
 Poznatky:
 
