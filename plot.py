@@ -1,45 +1,42 @@
+"""
+    IMS 2020/21 Project - Epidemic on macro level
+    Data plotting
+"""
 import matplotlib.pyplot as plt
 import pandas
 
+def main(filename: str, model: str) -> None:
+    """
+    Reads file in CSV format and visualises the data it contains
+    """
 
-def plot_model(filename, model):
+    # Read CSV file
     df = pandas.read_csv(filename)
 
-    #Population = df['Population']
-    Susceptible = df['Susceptible']
-    Infected = df['Infected']
-    Recovered = df['Recovered']
-
-    Exposed = Dead = ""
-
-    if model == "SEIRD":
-        Exposed = df['Exposed']
-        Dead = df['Dead']
-
-    steps = df.index.stop # ziska velkost celeho csv suboru (pocet krokov)
-
+    # Get data set size
+    steps = df.index.stop
     discrete_steps = list(range(steps))
 
-    fig, ax = plt.subplots()
+    S = df['S'] # Susceptible
+    I = df['I'] # Infected
+    R = df['R'] # Removed
 
-    ax.plot(discrete_steps, Susceptible, label='susceptible', color='blue', linewidth=1.5)
-    ax.plot(discrete_steps, Infected, label='infected', color='green', linewidth=1.5)
-    ax.plot(discrete_steps, Recovered, label='recovered', color='orange', linewidth=1.5)
-    
-    title = "SIR"
+    # Plotting
+    fig, ax = plt.subplots()
+    ax.plot(discrete_steps, S, label='Susceptible', color='blue',   linewidth=1.5)
+    ax.plot(discrete_steps, I, label='Infected',    color='green',  linewidth=1.5)
+    ax.plot(discrete_steps, R, label='Recovered',   color='orange', linewidth=1.5)
 
     if model == "SEIRD":
-        ax.plot(discrete_steps, Exposed, label='exposed', color='yellow', linewidth=1.5)
-        ax.plot(discrete_steps, Dead, label='dead', color='black', linewidth=1.5)
-        title = "SEIRD"
+        E = df['E'] # Exposed
+        D = df['D'] # Dead
+        ax.plot(discrete_steps, E, label='Exposed', color='yellow', linewidth=1.5)
+        ax.plot(discrete_steps, D, label='Dead',    color='black',  linewidth=1.5)
 
-    ax.set(xlabel='Steps',
-            ylabel='Population count',
-            title=title)
-
+    ax.set(xlabel='Steps', ylabel='Population count', title=model)
     ax.legend()
     plt.show()
 
-
-plot_model("data_SEIRD.csv", "SEIRD")
-#plot_model("data_SIR.csv", "SIR")
+if __name__ == '__main__':
+    main("data_SEIRD.csv", "SEIRD")
+    #main("data_SIR.csv", "SIR")

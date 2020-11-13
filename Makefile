@@ -7,15 +7,15 @@
 # quiet makefile using prefix '@'
 CC = @g++
 
-CPPFLAGS = -std=c++11 -pedantic -Wall -Wextra -g -O2 -Wno-unused-parameter -lsimlib -lm 
+CPPFLAGS = -std=c++11 -pedantic -Wall -Wextra -g -O2 -Wno-unused-parameter
 
-PATHS = src/
-PATHB = bin/
+SRC = src/*.cpp
+HDR = src/headers/*.h
 
 all: main
 
-main: $(PATHS)main.cpp
-	$(CC) $(CPPFLAGS) $^ -o $@ $(info    Compiling program...)
+main: $(SRC) $(HDR)
+	$(CC) $(CPPFLAGS) $(SRC) -o $@ $(info    Compiling program...)
 
 clean:
 	rm -f main *.o
