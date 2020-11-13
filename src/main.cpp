@@ -18,6 +18,18 @@
  */
 int main(int argc, char** argv){
     sirModel model;
-    model.parseArgs(argc, argv);
+
+    if (argc == 2) {
+        if (strcmp(argv[1],"scenario1") == 0) {
+            model.exp1();
+        }
+
+        if (strcmp(argv[1],"scenario2") == 0) {
+            model.exp2();
+        }
+    } else {
+        model.parseArgs(argc, argv);
+    }
+
     return model.performSimulation();
 }

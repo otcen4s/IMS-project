@@ -17,6 +17,14 @@ all: main
 main: $(SRC) $(HDR)
 	$(CC) $(CPPFLAGS) $(SRC) -o $@ $(info    Compiling program...)
 
+exp1: main
+	./main scenario1
+	python3 plot.py SIR
+
+exp2: main
+	./main scenario2
+	python3 plot.py SEIRD
+
 clean:
 	rm -f main *.o
 	

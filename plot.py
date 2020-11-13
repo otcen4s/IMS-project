@@ -4,8 +4,11 @@
 """
 import matplotlib.pyplot as plt
 import pandas
+import sys
 
-def main(filename: str, model: str) -> None:
+model = ""
+
+def main(filename: str) -> None:
     """
     Reads file in CSV format and visualises the data it contains
     """
@@ -38,5 +41,11 @@ def main(filename: str, model: str) -> None:
     plt.show()
 
 if __name__ == '__main__':
-    main("data_SEIRD.csv", "SEIRD")
-    #main("data_SIR.csv", "SIR")
+    model = sys.argv[1]
+    if model == "SIR":
+        main("data_SIR.csv")
+    elif model == "SEIRD":
+        main("data_SEIRD.csv")
+    else:
+        pass
+

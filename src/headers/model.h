@@ -28,7 +28,7 @@ class sirModel {
 private:
     long double
         S/* susceptible */, I/* infected*/, R = 0.0/* removed */, E/* Exposed */, D /* Dead */, N/* whole population */,
-        dS = 0.0, dE = 0.0, dI = 0.0, dR = 0.0, dD = 0.0,/* new values */
+        dS = 0.0,           dI = 0.0,       dR = 0.0 ,            dE = 0.0,       dD = 0.0,/* new values */
 
     // beta:  The rate of how often a susceptible-infected contact results in a new infection.(transmission rate)
     // alpha: The rate an infected recovers and moves into the resistant phase.(recovery rate)
@@ -57,10 +57,11 @@ public:
 
     /**
      * Simulation of an epidemic based on SIR model:
-     *  S = Sold - Sold * Iold * alpha
-     *  I = Iold + Sold * Iold * alpha - alpha * Iold
-     *  R = alpha * Iold
+     *  dS = - S * I * alpha
+     *  dI = S * I * alpha - alpha * I
+     *  dR = alpha * I
      *
+     *  dS + dI + dR = 0 (Changes have to match)
      *  S + I + R = N (Entire population)
      */
     void calculateSIR();
@@ -70,6 +71,16 @@ public:
      * Results of ordinary differential equations for S, E, I, R, D values at every time point of the simulation
      */
     void calculateSEIRD();
+
+    /**
+     * First experiment, demonstrates epidemic with no measures (SIR)
+     */
+    void exp1();
+
+    /**
+     * Second experiment, demonstrates epidemic with no measures (SIERD)
+     */
+    void exp2();
 
     /**
      * Simulation itself

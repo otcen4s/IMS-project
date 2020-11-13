@@ -51,7 +51,6 @@ void sirModel::parseArgs(int argc, char **argv) {
                 // Single-argument options
                 if(!optarg || !optarg[0]) {
                     this->print_help();
-                    exit(1);
                 }
 
                 switch (opt) {
@@ -84,7 +83,6 @@ void sirModel::parseArgs(int argc, char **argv) {
 
                     default:
                         print_help();
-                        exit(1);
                     }
 
         }
@@ -96,25 +94,42 @@ void sirModel::calculateSIR() {
     dI += ((beta * S * I) / N) - alpha * I;
     dR += (alpha * I);
 
-    // dI += (S * I * beta);
-    // dI -= (alpha * I);
-    // dR += (alpha * I);
-
     S = dS;
     I = dI;
 }
 
 void sirModel::calculateSEIRD() {
-    dS += (- beta * S * I) / N;
-    dE += ((beta * S * I) / N) - (sigma * E);
+    dS += (- beta * S * I);
+    dE += ((beta * S * I)) - (sigma * E);
     dI += (sigma * E) - (alpha * I) - omega * I; // (- omega * I) -> berie do uvahy umrtia
     dR += alpha * I;
     dD += omega * I;
 
-    D = dD;
     S = dS;
-    E = dE;
     I = dI;
+    E = dE;
+    D = dD;
+}
+
+void sirModel::exp1() {
+    N = 10000;
+
+    I = dI = 20;
+    beta = 0.1;
+    alpha = 0.001;
+    steps = 400;
+}
+
+void sirModel::exp2() {
+    N = 10000;
+
+    I = dI = 3;
+    beta = 0.0001;
+    alpha = 0.01;
+    steps = 200;
+    sigma = 1;
+    omega = 0.01;
+    modelSEIRD = true;
 }
 
 int sirModel::performSimulation() {
