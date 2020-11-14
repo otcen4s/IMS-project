@@ -37,7 +37,6 @@ void sirModel::parseArgs(int argc, char **argv) {
         switch (opt) {
             case 'h':
                 print_help();
-                break;
 
             case ':':
                 cerr << "option needs a value" << endl;
@@ -55,28 +54,28 @@ void sirModel::parseArgs(int argc, char **argv) {
 
                 switch (opt) {
                     case 'i': // infected
-                        I = dI = stod(optarg); break;
+                        curr.I = next.I = stod(optarg); break;
 
                     case 'p': // population
                         N = stod(optarg); break;
 
                     case 'b': // transmission
-                        beta = stod(optarg); break;
+                        rates.beta = stod(optarg); break;
 
                     case 'a': // recovery
-                        alpha = stod(optarg); break;
+                        rates.alpha = stod(optarg); break;
 
                     case 'e': // exposed
-                        E = dE = stod(optarg); break;
+                        curr.E = next.E = stod(optarg); break;
 
                     case 'o': // fatality
-                        omega = stod(optarg); break;
+                        rates.omega = stod(optarg); break;
+
+                    case 'm': // infectivity
+                        rates.sigma = stod(optarg); break;
 
                     case 's': // steps
                         steps = strtol(optarg, nullptr, 10); break;
-
-                    case 'm': // infectiveness
-                        sigma = stod(optarg); break;
 
                     case 'x': // SIR or SEIRD ?
                         if(strtol(optarg, nullptr, 10) == 1) modelSEIRD = true; break;
@@ -90,84 +89,108 @@ void sirModel::parseArgs(int argc, char **argv) {
 }
 
 void sirModel::calculateSIR() {
-    dS += (-beta * S * I) / N;
-    dI += ((beta * S * I) / N) - alpha * I;
-    dR += (alpha * I);
+    // Calculate new values
+    long double rnd = ((double)rand() / RAND_MAX) * 2; // pseudorandom float on <0,2>
+    next.S += -rates.beta * curr.S * curr.I * rnd;
+    next.I += rates.beta * curr.S * curr.I * rnd - rates.alpha * curr.I;
+    next.R += (rates.alpha * curr.I);
 
-    S = dS;
-    I = dI;
+    // Calculate change in current step
+    derr.S = next.S - curr.S;
+    derr.I = next.I - curr.I;
+    derr.R = next.R - curr.R;
+
+    // Update values
+    curr.S = next.S;
+    curr.I = next.I;
+    curr.R = next.R;
 }
 
 void sirModel::calculateSEIRD() {
-    dS += (- beta * S * I);
-    dE += ((beta * S * I)) - (sigma * E);
-    dI += (sigma * E) - (alpha * I) - omega * I; // (- omega * I) -> berie do uvahy umrtia
-    dR += alpha * I;
-    dD += omega * I;
+    // Calculate new values
+    next.S += (-rates.beta * curr.S * curr.I);
+    next.E += ((rates.beta * curr.S * curr.I)) - (rates.sigma * curr.E);
+    next.I += (rates.sigma * curr.E) - (rates.alpha * curr.I) - rates.omega * curr.I;
+    next.R += rates.alpha * curr.I;
+    next.D += rates.omega * curr.I;
 
-    S = dS;
-    I = dI;
-    E = dE;
-    D = dD;
+    // Calculate change in current step
+    derr.S = next.S - curr.S;
+    derr.E = next.E - curr.E;
+    derr.I = next.I - curr.I;
+    derr.R = next.R - curr.R;
+    derr.D = next.D - curr.D;
+
+    // Update values
+    curr.S = next.S;
+    curr.E = next.E;
+    curr.I = next.I;
+    curr.R = next.R;
+    curr.D = next.D;
+}
+
+int sirModel::simulateSIR() {
+    ofstream dataFile;
+
+    dataFile.open(filenames.SIR);
+    dataFile << "S,I,R\n"; // CSV header
+
+    curr.S = next.S = 1000 - next.I / N * 1000; // Susceptible = Population - Infected
+    for (unsigned long i = 0; i < steps; i++) { // Simulation start
+        dataFile
+                << round(curr.S * N / 1000) << ","
+                << round(curr.I * N / 1000) << ","
+                << round(curr.R * N / 1000) << endl;
+        calculateSIR();
+    }
+    dataFile.close();
+    return 0;
+}
+
+int sirModel::simulateSEIRD() {
+    ofstream dataFile;
+
+    dataFile.open(filenames.SEIRD);
+    dataFile << "S,E,I,R,D\n"; // CSV header
+
+    curr.S = next.S = N - next.I - next.E;  // Susceptible = Population - Infected - Exposed
+    for (unsigned long i = 0; i < steps; i++) { // Simulation start
+        dataFile
+            << round(curr.S) << ","
+            << round(curr.E) << ","
+            << round(curr.I) << ","
+            << round(curr.R) << ","
+            << round(curr.D) << endl;
+        calculateSEIRD();
+    }
+    dataFile.close();
+    return 0;
 }
 
 void sirModel::exp1() {
-    N = 10000;
+    N = 35000;
 
-    I = dI = 20;
-    beta = 0.1;
-    alpha = 0.001;
-    steps = 400;
+    curr.I = next.I = 1;
+
+    rates.beta = 0.001;
+    rates.alpha = 0.1;
+
+    steps = 60;
+
+    simulateSIR();
 }
 
 void sirModel::exp2() {
     N = 10000;
 
-    I = dI = 3;
-    beta = 0.0001;
-    alpha = 0.01;
+    curr.I = next.I = 3;
+
+    rates.beta = 0.0001;
+    rates.alpha = 0.1;
+    rates.sigma = 1;
+    rates.omega = 0.01;
+
     steps = 200;
-    sigma = 1;
-    omega = 0.01;
-    modelSEIRD = true;
-}
 
-int sirModel::performSimulation() {
-    ofstream dataFile;
-
-    if(modelSEIRD) {
-        dataFile.open(SEIRD);
-        dataFile << "S,E,I,R,D\n"; // CSV header
-
-        S = dS = N - dI - dE;  // Susceptible = Population - Infected - Exposed
-        for (unsigned long i = 0; i < steps; i++) { // Simulation start
-            dataFile
-                << round(dS) << ","
-                << round(dE) << ","
-                << round(dI) << ","
-                << round(dR) << ","
-                << round(dD) << "\n";
-
-            calculateSEIRD();
-        }
-        dataFile.close();
-    }
-    else {
-        dataFile.open(SIR);
-        dataFile << "S,I,R\n"; // CSV header
-
-        S = dS = N - dI;  // Susceptible = Population - Infected
-        for (unsigned long i = 0; i < steps; i++) { // Simulation start
-            dataFile
-                << round(dS) << ","
-                << round(dI) << ","
-                << round(dR) << "\n";
-
-            calculateSIR();
-        }
-
-        dataFile.close();
-    }
-
-    return 0;
+    simulateSEIRD();
 }

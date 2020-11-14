@@ -29,7 +29,11 @@ int main(int argc, char** argv){
         }
     } else {
         model.parseArgs(argc, argv);
-    }
 
-    return model.performSimulation();
+        if (model.modelSEIRD) {
+            model.simulateSEIRD();
+        } else {
+            model.simulateSIR();
+        }
+    }
 }

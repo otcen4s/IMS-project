@@ -1,7 +1,7 @@
 /**
  * IMS 2020/21 Project - Epidemic on macro level
  *
- * Simulation model implementation
+ * Simulation model interface
  *
  * @authors Matej Otčenáš, Mário Gažo
  * @see https://en.wikipedia.org/wiki/Compartmental_models_in_epidemiology#The_SIR_model
@@ -26,25 +26,58 @@
  */
 class sirModel {
 private:
-    long double
-        S/* susceptible */, I/* infected*/, R = 0.0/* removed */, E/* Exposed */, D /* Dead */, N/* whole population */,
-        dS = 0.0,           dI = 0.0,       dR = 0.0 ,            dE = 0.0,       dD = 0.0,/* new values */
+    long double N = 0.0; // Whole population: N = S + I + R (+ E + D)
 
-    // beta:  The rate of how often a susceptible-infected contact results in a new infection.(transmission rate)
-    // alpha: The rate an infected recovers and moves into the resistant phase.(recovery rate)
-    // sigma: The rate at which an exposed person becomes infective.
-    // omega: The infection fatality rate (IFR).
-    // rates
-    beta = 0.0/* transmission */, alpha = 0.0/* recovery */,
-    sigma = 0.0/* infectiveness */, omega = 0.0 /* fatality */;
+    // Current values
+    struct curr {
+        long double
+            S = 0.0/* Susceptible */,
+            I = 0.0/* Infected*/,
+            R = 0.0/* Removed */,
+            E = 0.0/* Exposed */,
+            D = 0.0/* Dead */;
+    } curr;
+
+    // Next values
+    struct next {
+        long double
+            S = 0.0/* Susceptible */,
+            I = 0.0/* Infected*/,
+            R = 0.0/* Removed */,
+            E = 0.0/* Exposed */,
+            D = 0.0/* Dead */;
+    } next;
+
+    // Derivatives = next - curr
+    struct derr {
+        long double
+            S = 0.0/* Susceptible */,
+            I = 0.0/* Infected*/,
+            R = 0.0/* Removed */,
+            E = 0.0/* Exposed */,
+            D = 0.0/* Dead */;
+    } derr;
+
+    // Coefficients for calculations
+    struct rates {
+        long double
+            beta  = 0.0/* Transmission: how often a susceptible-infected contact results in a new infection */,
+            alpha = 0.0/* Recovery: infected recovers and moves into the resistant phase */,
+            sigma = 0.0/* Infectivity: exposed person becomes infective */,
+            omega = 0.0/* Fatality: infected person dies */;
+    } rates;
+
+    // Output files
+    struct filenames {
+        std::string SIR = "data_SIR.csv";
+        std::string SEIRD = "data_SEIRD.csv";
+    } filenames;
 
     unsigned long steps = 0; /* number of steps */
 
-    bool modelSEIRD = false;
-    std::string SEIRD = "data_SEIRD.csv";
-    std::string SIR = "data_SIR.csv";
-
 public:
+    bool modelSEIRD = false;
+
     /**
      * Function prints help guide to stdout and terminates the program successfully
      */
@@ -73,6 +106,20 @@ public:
     void calculateSEIRD();
 
     /**
+     * Simulation of SIR model
+     *
+     * @return 0 if OK
+     */
+    int simulateSIR();
+
+    /**
+     * Simulation of SEIRD model
+     *
+     * @return 0 if OK
+     */
+    int simulateSEIRD();
+
+    /**
      * First experiment, demonstrates epidemic with no measures (SIR)
      */
     void exp1();
@@ -81,13 +128,6 @@ public:
      * Second experiment, demonstrates epidemic with no measures (SIERD)
      */
     void exp2();
-
-    /**
-     * Simulation itself
-     *
-     * @return 0 if OK
-     */
-    int performSimulation();
 };
 
 #endif //_MAIN_H_
