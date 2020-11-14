@@ -91,19 +91,21 @@ void sirModel::parseArgs(int argc, char **argv) {
                     }
         }
     }
-
-    if((rates.alpha > 1.0 || rates.alpha <= 0.0) || (rates.beta > 1.0 || rates.beta <= 0.0) || (rates.omega > 1.0 || rates.omega <= 0.0) || (rates.sigma > 1.0 || rates.sigma <= 0.0)) {
-        cerr << "Coefficients must be less or equal than 1.0 and greater than 0.0\n";
-        exit(1);
-    }
 }
 
 void sirModel::calculateSIR() {
     // Calculate new values
     long double rnd = ((double)rand() / RAND_MAX) * 2; // pseudorandom float on <0,2>
-    next.S += (-rates.beta * curr.S * curr.I * rnd) / N;
-    next.I += (rates.beta * curr.S * curr.I * rnd) / N - rates.alpha * curr.I;
-    next.R += (rates.alpha * curr.I);
+    long double newInfected = (rates.beta * curr.S * curr.I * rnd) / N;
+
+    if (newInfected > next.S) {
+        next.S = 0;
+        next.E += curr.S - (rnd * rates.sigma * curr.E);
+    } else {
+        next.S += -newInfected;
+        next.I += newInfected - rnd * rates.alpha * curr.I;
+    }
+    next.R += rnd * rates.alpha * curr.I;
 
     // Calculate change in current step
     derr.S = next.S - curr.S;
@@ -118,11 +120,19 @@ void sirModel::calculateSIR() {
 
 void sirModel::calculateSEIRD() {
     // Calculate new values
-    next.S += (-rates.beta * curr.S * curr.I) / N;
-    next.E += ((rates.beta * curr.S * curr.I) / N) - (rates.sigma * curr.E);
-    next.I += (rates.sigma * curr.E) - (rates.alpha * curr.I) - rates.omega * curr.I;
-    next.R += rates.alpha * curr.I;
-    next.D += rates.omega * curr.I;
+    long double rnd = ((double)rand() / RAND_MAX) * 2; // pseudorandom float on <0,2>
+    long double newInfected = (rates.beta * curr.S * curr.I * rnd) / N;
+
+    if (newInfected > next.S) {
+        next.S = 0;
+        next.E += curr.S - (rnd * rates.sigma * curr.E);
+    } else {
+        next.S += -newInfected;
+        next.E += newInfected - (rnd * rates.sigma * curr.E);
+    }
+    next.I += rnd * (rates.sigma * curr.E - rates.alpha * curr.I - rates.omega * curr.I);
+    next.R += rnd * rates.alpha * curr.I;
+    next.D += rnd * rates.omega * curr.I;
 
     // Calculate change in current step
     derr.S = next.S - curr.S;
@@ -144,8 +154,6 @@ int sirModel::simulateSIR() {
 
     dataFile.open(filenames.SIR);
     dataFile << "S,I,R\n"; // CSV header
-
-    //curr.S = next.S = 1000 - next.I / N * 1000; // Susceptible = Population - Infected
     
     curr.S = next.S = (N - next.I); // / N;
     //curr.I = next.I /= N;
@@ -153,9 +161,6 @@ int sirModel::simulateSIR() {
 
     for (unsigned long i = 0; i < steps; i++) { // Simulation start
         dataFile
-                // << round(curr.S * N / 1000) << ","
-                // << round(curr.I * N / 1000) << ","
-                // << round(curr.R * N / 1000) << endl;
                 << round(curr.S) << ","
                 << round(curr.I) << ","
                 << round(curr.R) << endl;
@@ -195,18 +200,14 @@ void sirModel::exp1() {
     N = 5000000;
 
     curr.I = next.I = 10;
-
     rates.beta = 0.5;
     rates.alpha = 0.1;
 
-    steps = 162;
+    steps = 100;
 
     simulateSIR();
 }
 
-/**
- * 
- */
 void sirModel::exp2() {
     N = 3600;
 
