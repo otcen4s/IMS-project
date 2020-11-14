@@ -9,16 +9,21 @@
  * @date 13. 11. 2020
  */
 #include "headers/model.h"
+#include <cstdlib>
 
 using namespace std;
 
 void sirModel::print_help() {
     std::cout <<
-              "-i [infected]             Initial count of infected.\n"
+              "-i [infected]             Initial count of infective.\n"
               "-p [population]           Initial count of population.\n"
-              "-b [transmission_rate]    Transmission rate of infection COVID-19.\n"
+              "-e [exposed]              Initial count of exposed.\n"
+              "-b [transmission_rate]    Transmission rate of infection COVID-19.\n"  
               "-a [recovery_rate]        Recovery rate from infection COVID-19.\n"
+              "-o [fatality_rate]        Infection fatality rate (IFR) of COVID-19\n"
+              "-m [exposed_rate]         The rate at which an exposed person becomes infective of COVID-19\n"         
               "-s [steps]                Number of steps of simulation.\n"
+              "-x [model]                1 = SEIRD, 0 = SIR\n"
               "-h [help]                 Help guide for program usage.\n";
     exit(0);
 }
@@ -37,6 +42,7 @@ void sirModel::parseArgs(int argc, char **argv) {
         switch (opt) {
             case 'h':
                 print_help();
+                break;
 
             case ':':
                 cerr << "option needs a value" << endl;
@@ -78,21 +84,25 @@ void sirModel::parseArgs(int argc, char **argv) {
                         steps = strtol(optarg, nullptr, 10); break;
 
                     case 'x': // SIR or SEIRD ?
-                        if(strtol(optarg, nullptr, 10) == 1) modelSEIRD = true; break;
+                        if(strtol(optarg, nullptr, 10) == 1) {modelSEIRD = true;} break;
 
                     default:
                         print_help();
                     }
-
         }
+    }
+
+    if((rates.alpha > 1.0 || rates.alpha <= 0.0) || (rates.beta > 1.0 || rates.beta <= 0.0) || (rates.omega > 1.0 || rates.omega <= 0.0) || (rates.sigma > 1.0 || rates.sigma <= 0.0)) {
+        cerr << "Coefficients must be less or equal than 1.0 and greater than 0.0\n";
+        exit(1);
     }
 }
 
 void sirModel::calculateSIR() {
     // Calculate new values
     long double rnd = ((double)rand() / RAND_MAX) * 2; // pseudorandom float on <0,2>
-    next.S += -rates.beta * curr.S * curr.I * rnd;
-    next.I += rates.beta * curr.S * curr.I * rnd - rates.alpha * curr.I;
+    next.S += (-rates.beta * curr.S * curr.I * rnd) / N;
+    next.I += (rates.beta * curr.S * curr.I * rnd) / N - rates.alpha * curr.I;
     next.R += (rates.alpha * curr.I);
 
     // Calculate change in current step
@@ -108,8 +118,8 @@ void sirModel::calculateSIR() {
 
 void sirModel::calculateSEIRD() {
     // Calculate new values
-    next.S += (-rates.beta * curr.S * curr.I);
-    next.E += ((rates.beta * curr.S * curr.I)) - (rates.sigma * curr.E);
+    next.S += (-rates.beta * curr.S * curr.I) / N;
+    next.E += ((rates.beta * curr.S * curr.I) / N) - (rates.sigma * curr.E);
     next.I += (rates.sigma * curr.E) - (rates.alpha * curr.I) - rates.omega * curr.I;
     next.R += rates.alpha * curr.I;
     next.D += rates.omega * curr.I;
@@ -180,17 +190,20 @@ void sirModel::exp1() {
     simulateSIR();
 }
 
+/**
+ * This experiment hits zero infected after 5843 steps
+ */
 void sirModel::exp2() {
     N = 10000;
 
     curr.I = next.I = 3;
 
-    rates.beta = 0.0001;
-    rates.alpha = 0.1;
-    rates.sigma = 1;
-    rates.omega = 0.01;
+    rates.beta = 0.7;
+    rates.alpha = 0.001;
+    rates.sigma = 1.0;
+    rates.omega = 0.0007;
 
-    steps = 200;
+    steps = 5843;
 
     simulateSEIRD();
 }

@@ -15,11 +15,13 @@
 /**
  * Include of libraries (C/C++)
  */
-#include "../../simlib/src/simlib.h" // TODO change to "simlib.h"
+//#include "../../simlib/src/simlib.h" // TODO change to "simlib.h"
 #include <iostream>
 #include <getopt.h>
 #include <string> 
 #include <fstream>
+#include <string.h>
+#include <cmath>
 
 /**
  * Simulation model interface
@@ -69,8 +71,8 @@ private:
 
     // Output files
     struct filenames {
-        std::string SIR = "data_SIR.csv";
-        std::string SEIRD = "data_SEIRD.csv";
+        std::string SIR = "statistics/data_SIR.csv";
+        std::string SEIRD = "statistics/data_SEIRD.csv";
     } filenames;
 
     unsigned long steps = 0; /* number of steps */

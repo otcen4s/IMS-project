@@ -43,9 +43,9 @@ def main(filename: str) -> None:
 if __name__ == '__main__':
     model = sys.argv[1]
     if model == "SIR":
-        main("data_SIR.csv")
+        main("statistics/data_SIR.csv")
     elif model == "SEIRD":
-        main("data_SEIRD.csv")
+        main("statistics/data_SEIRD.csv")
     else:
         pass
 
