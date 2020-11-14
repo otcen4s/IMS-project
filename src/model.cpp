@@ -145,12 +145,20 @@ int sirModel::simulateSIR() {
     dataFile.open(filenames.SIR);
     dataFile << "S,I,R\n"; // CSV header
 
-    curr.S = next.S = 1000 - next.I / N * 1000; // Susceptible = Population - Infected
+    //curr.S = next.S = 1000 - next.I / N * 1000; // Susceptible = Population - Infected
+    
+    curr.S = next.S = (N - next.I); // / N;
+    //curr.I = next.I /= N;
+    //curr.R = next.R /= N;
+
     for (unsigned long i = 0; i < steps; i++) { // Simulation start
         dataFile
-                << round(curr.S * N / 1000) << ","
-                << round(curr.I * N / 1000) << ","
-                << round(curr.R * N / 1000) << endl;
+                // << round(curr.S * N / 1000) << ","
+                // << round(curr.I * N / 1000) << ","
+                // << round(curr.R * N / 1000) << endl;
+                << round(curr.S) << ","
+                << round(curr.I) << ","
+                << round(curr.R) << endl;
         calculateSIR();
     }
     dataFile.close();
@@ -163,7 +171,13 @@ int sirModel::simulateSEIRD() {
     dataFile.open(filenames.SEIRD);
     dataFile << "S,E,I,R,D\n"; // CSV header
 
-    curr.S = next.S = N - next.I - next.E;  // Susceptible = Population - Infected - Exposed
+    // S + I + E + R + D = 1
+    curr.S = next.S = (N - next.I - next.E); // / N;  // Susceptible = Population - Infected - Exposed
+    // curr.I = next.I /= N;
+    // curr.E = next.E /= N;
+    // curr.R = next.R /= N;
+    // curr.D = next.D /= N;
+    
     for (unsigned long i = 0; i < steps; i++) { // Simulation start
         dataFile
             << round(curr.S) << ","
@@ -178,32 +192,32 @@ int sirModel::simulateSEIRD() {
 }
 
 void sirModel::exp1() {
-    N = 35000;
+    N = 5000000;
 
-    curr.I = next.I = 1;
+    curr.I = next.I = 10;
 
-    rates.beta = 0.001;
+    rates.beta = 0.5;
     rates.alpha = 0.1;
 
-    steps = 60;
+    steps = 162;
 
     simulateSIR();
 }
 
 /**
- * This experiment hits zero infected after 5843 steps
+ * 
  */
 void sirModel::exp2() {
-    N = 10000;
+    N = 3600;
 
-    curr.I = next.I = 3;
+    curr.I = next.I = 0;
+    curr.E = next.E = 1;
+    rates.beta = 0.1 * 10; // probability of meeting a new person * number of people that infected person met
+    rates.alpha = 0.095;
+    rates.sigma = 0.143;
+    rates.omega = 0.0034;
 
-    rates.beta = 0.7;
-    rates.alpha = 0.001;
-    rates.sigma = 1.0;
-    rates.omega = 0.0007;
-
-    steps = 5843;
+    steps = 100;
 
     simulateSEIRD();
 }

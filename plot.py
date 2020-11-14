@@ -5,6 +5,7 @@
 import matplotlib.pyplot as plt
 import pandas
 import sys
+from matplotlib.animation import FuncAnimation
 
 model = ""
 
@@ -25,7 +26,10 @@ def main(filename: str) -> None:
     R = df['R'] # Removed
 
     # Plotting
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize = (10,10))
+    ax.set_xlim(0,len(discrete_steps))
+    #ax.set_ylim(0,)
+
     ax.plot(discrete_steps, S, label='Susceptible', color='blue',   linewidth=1.5)
     ax.plot(discrete_steps, I, label='Infected',    color='green',  linewidth=1.5)
     ax.plot(discrete_steps, R, label='Recovered',   color='orange', linewidth=1.5)
