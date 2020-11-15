@@ -25,6 +25,14 @@ exp2: main
 	./main scenario2
 	python3 plot.py SEIRD
 
+exp3: main
+	./main scenario3
+	python3 plot.py SEIRD
+
+exp4: main
+	./main scenario4
+	python3 plot.py SIR
+
 clean:
 	rm -f main *.o
 	

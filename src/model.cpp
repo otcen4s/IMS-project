@@ -160,6 +160,7 @@ int sirModel::simulateSIR() {
     //curr.R = next.R /= N;
 
     for (unsigned long i = 0; i < steps; i++) { // Simulation start
+        //setRestriction();
         dataFile
                 << round(curr.S) << ","
                 << round(curr.I) << ","
@@ -183,7 +184,10 @@ int sirModel::simulateSEIRD() {
     // curr.R = next.R /= N;
     // curr.D = next.D /= N;
     
+    
+
     for (unsigned long i = 0; i < steps; i++) { // Simulation start
+        setRestriction();
         dataFile
             << round(curr.S) << ","
             << round(curr.E) << ","
@@ -197,11 +201,11 @@ int sirModel::simulateSEIRD() {
 }
 
 void sirModel::exp1() {
-    N = 5000000;
+    N = 3600;
 
-    curr.I = next.I = 10;
-    rates.beta = 0.5;
-    rates.alpha = 0.1;
+    curr.I = next.I = 1;
+    rates.beta = 0.1 * 10;
+    rates.alpha = 0.095;
 
     steps = 100;
 
@@ -218,7 +222,44 @@ void sirModel::exp2() {
     rates.sigma = 0.143;
     rates.omega = 0.0034;
 
+    steps = 105;
+
+    simulateSEIRD();
+}
+
+void sirModel::exp3() {
+    N = 5000000;
+
+    curr.I = next.I = 0;
+    curr.E = next.E = 1;
+    rates.beta = 0.1 * 50; // probability of meeting a new person * number of people that infected person met
+    rates.alpha = 0.095;
+    rates.sigma = 0.143;
+    rates.omega = 0.0034;
+
     steps = 100;
 
     simulateSEIRD();
+}
+
+void sirModel::exp4() {
+    N = 5000000;
+
+    curr.I = next.I = 1;
+    rates.beta = 0.1 * 10; // probability of meeting a new person * number of people that infected person met
+    rates.alpha = 0.095;
+
+    steps = 100;
+
+    simulateSIR();
+}
+
+
+void sirModel::setRestriction(){
+    auto firstLine = N * 0.20;  // 20% of population
+
+    if(curr.I >= firstLine && (!restrictionTook)){
+        rates.alpha *= 1.5;
+        restrictionTook = true;
+    }
 }

@@ -79,6 +79,7 @@ private:
 
 public:
     bool modelSEIRD = false;
+    bool restrictionTook = false;
 
     /**
      * Function prints help guide to stdout and terminates the program successfully
@@ -130,6 +131,21 @@ public:
      * Second experiment, demonstrates epidemic with no measures (SIERD)
      */
     void exp2();
+
+    /**
+     * Third experiment, demonstrates epidemic with no measures (SIERD)
+     */
+    void exp3();
+
+    /**
+     * Fourth experiment, demonstrates epidemic with no measures (SIR)
+     */
+    void exp4();
+
+    /**
+     * 
+     */
+    void setRestriction();
 };
 
 #endif //_MAIN_H_

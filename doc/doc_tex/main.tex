@@ -1,0 +1,133 @@
+\documentclass{article}
+\usepackage{graphicx}
+\graphicspath{ {./images/} }
+\usepackage[export]{adjustbox}
+\usepackage{blindtext}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage[english]{babel}
+\usepackage{listings}
+\usepackage{filecontents}
+\usepackage[nottoc,notlot,notlof]{tocbibind}
+\usepackage{caption}
+\usepackage{textgreek}
+
+
+\captionsetup{
+  font=footnotesize,
+}
+
+\usepackage[
+backend=biber,
+style=alphabetic,
+sorting=ynt
+]{biblatex}
+
+\addbibresource{sample.bib}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    filecolor=blue,      
+    urlcolor=black,
+}
+
+\begin{document}
+
+\begin{titlepage}
+\begin{figure}[t]
+\includegraphics[width=1\textwidth,center]{fit_pic.png}
+\end{figure}
+
+\centering
+
+{\LARGE\series VYSOKÉ UČENÍ TECHNICKÉ V BRNĚ}
+
+\vspace{1cm}
+
+{\LARGE Modelování a simulace}
+
+\vspace{4cm}
+
+\text{ \LARGE Epidemiologické modely - modely na makroúrovni }
+\vspace{0.7cm}
+
+\text{ \Large 2020/2021}
+
+\vspace{1.5cm}
+
+{\large Matej Otčenáš, xotcen01}\\
+{\large Mário Gažo, xgazom00}
+
+\vspace{1cm}
+
+\text{November 15, 2020}
+
+\vfill
+
+\end{titlepage}
+
+\renewcommand{\figurename}{Obrázok}
+\renewcommand{\contentsname}{Obsah}
+\renewcommand\bibname{Zdroje}
+
+
+\tableofcontents
+\newpage
+
+\begin{sloppypar}
+
+\section{Úvod}
+   Našou úlohou bolo vytvoriť model epidémie na makro úrovni, na určitom väčšom území, preskúmať jej dopady na chod kraju. Ďalej máme preskúmať možné scenáre priebehu samotnej epidémie za určitých okolností, teda napr. počet úmrtí, maximálny počet nakazených jedincov v jeden moment, odhad konca epidémie. Taktiež máme zistiť aký vplyv budem by mal na priebeh angažovanosť moci štátnych zástupcov, rôzne nariadenia, čiastočné, či úplné uzavretie.
+ 
+\section{Riešenie}
+       
+    \subsection{Voľba modelu}
+    Pre modelovanie tejto situácie, nie je možné modelovať Petriho sieťou, keďže sa nejedná o systém hromadnej obsluhy (SHO), ale o spojitý systém. Na výber je viacero existujúcich možností. Po preskúmaní každej a konzultácii s profesorkou Monikou Heiner z Brandenburg University of Technology Computer Science Institute sme sa rozhodli pre SIR model a jeho rozšírenie SEIRD model.
+    
+    \subsection{SIR model}
+    Jedná sa o model šírenia epidémie, ktorý je založený na trojici diferenciálnych rovníc. Pri každom kroku simulácie sú vyrátané početnosti jednotlivých skupín, pričom v každom momente musí platiť, že \textit{S + I + R = N} a že \textit{dS~+~dI~+~dR~=~0}. Model zjednodušuje realitu v tom, že tí ktorí sa nakazili a vyliečili, sa nemôžu opätovne nakaziť. Ak ním chceme modelovať epidémiu, musíme zadať početnosť populácie, infekčných, tempo ochorenia a vyliečenia. Model SIR je možné popísať nasledovnými diferenciálnymi rovnicami. 
+    
+        \begin{align}
+            \frac{dS}{dt} &= -\frac{\beta IS}{N}\\
+            \frac{dI}{dt} &= \frac{\beta IS}{N} - \gamma I\\
+            \frac{dR}{dt} &= \gamma I
+        \end{align}
+        
+    Premenná \textit{S} predstavuje množinu ľudí, ktorých je možné nakaziť (angl.\textit{ susceptible}), \textit{I} je množina infekčných ľudí, \textit{R} množina ľudí, čo ochorenie prekonali a získali imunitu, resp. nákaze podľahli (angl. \textit{removed}). Celkovú populáciu reprezentuje množina \textit{N}. Rovnice obsahujú taktiež koeficienty, ktoré ovplyvňujú samotný model. Koeficient \textbeta \space udáva rýchlosť šírenia nákazy (angl. \textit{transmission rate}), ten sa odvíja od súčinu pravdepodobnosti stretnutia infikovanej osoby s novou osobou a počtu ľudí, ktorých infikovaná osoba stretla. Koeficient \textalpha je naopak hodnota rýchlosti zotavenia z ochorenia (angl. \textit{recovery rate}).
+
+    \subsection{SEIRD model}
+    Na rozdiel od SIR modelu, SIERD model počíta aj s určitou mierou mortality a taktiež s tým, že nie každý, kto bol v kontakte s nakazenou osobou sa nakazí. Jedná sa o viac realistický model, no taktiež je komplexnejší, pretože je potreba zvoliť viacero parametrov, teda okrem tých pre SIR aj tempo nakazenia a pravdepodobnosť úmrtia.Model SEIRD je taktiež možné, rovnako ako model SIR, popísať diferenciálnymi rovnicami.
+    
+    \begin{align}
+        \frac{dS}{dt} &= -\frac{\beta IS}{N}\\
+        \frac{dE}{dt} &= \frac{\beta IS}{N} - \alpha E\\
+        \frac{dI}{dt} &= \sigma E - \alpha I - \omega I\\
+        \frac{dR}{dt} &= \alpha I\\
+        \frac{dD}{dt} &= \omega I
+    \end{align}
+
+    Rovnako ako model SIR, aj model SEIRD pozostáva z identických premenných a koeficientov, je však o niečo rozšírený. Premenná \textit{E} je množina ľudí, ktorí boli vystavení infekčnej osobe, no oni sami sú infikovaní, nie však infekční (angl. \textit{exposed}). Premenná \textit{D} je množina ľudí, ktorí nákaze podľahli. Koeficient \textsigma je úroveň skrytých prenášačov, ktorí sa stanú infekčnými a \textomega\footnote{IFR - Infection Fatality Rate} je úroveň úmrtia na dané ochorenie.
+\end{sloppypar}
+
+
+% vlozenie obrazku
+        % \includegraphics[width=1.0\textwidth,center]{.png}
+        % \begin{figure}[h]
+        % \centering
+        % \caption{SIR model}
+        % \label{fig:SIR model 1}
+        % \end{figure}
+
+
+
+%bibliografia
+\medskip
+\addcontentsline{toc}{section}{Zdroje}
+\printbibliography[title={Zdroje}]
+
+
+\end{document}
+

@@ -27,6 +27,15 @@ int main(int argc, char** argv){
         if (strcmp(argv[1],"scenario2") == 0) {
             model.exp2();
         }
+
+        if (strcmp(argv[1],"scenario3") == 0) {
+            model.exp3();
+        }
+
+        if (strcmp(argv[1],"scenario4") == 0) {
+            model.exp4();
+        }
+        
     } else {
         model.parseArgs(argc, argv);
 
