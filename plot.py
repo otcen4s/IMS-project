@@ -40,7 +40,7 @@ def main(filename: str) -> None:
         ax.plot(discrete_steps, E, label='Exposed', color='yellow', linewidth=1.5)
         ax.plot(discrete_steps, D, label='Dead',    color='black',  linewidth=1.5)
 
-    ax.set(xlabel='Steps', ylabel='Population count', title=model)
+    ax.set(xlabel='Time(days)', ylabel='Population count', title=model)
     ax.legend()
     plt.show()
 

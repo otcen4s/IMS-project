@@ -66,7 +66,8 @@ private:
             beta  = 0.0/* Transmission: how often a susceptible-infected contact results in a new infection */,
             alpha = 0.0/* Recovery: infected recovers and moves into the resistant phase */,
             sigma = 0.0/* Infectivity: exposed person becomes infective */,
-            omega = 0.0/* Fatality: infected person dies */;
+            omega = 0.0/* Fatality: infected person dies */,
+            betaNative = 0.0;
     } rates;
 
     // Output files
@@ -146,6 +147,11 @@ public:
      * 
      */
     void setRestriction();
+
+    /**
+     * 
+     */
+    void printInfo();
 };
 
 #endif //_MAIN_H_

@@ -10,6 +10,7 @@
  */
 #include "headers/model.h"
 #include <cstdlib>
+#include <iostream>
 
 using namespace std;
 
@@ -66,7 +67,7 @@ void sirModel::parseArgs(int argc, char **argv) {
                         N = stod(optarg); break;
 
                     case 'b': // transmission
-                        rates.beta = stod(optarg); break;
+                        rates.beta = rates.betaNative = stod(optarg); break;
 
                     case 'a': // recovery
                         rates.alpha = stod(optarg); break;
@@ -159,13 +160,14 @@ int sirModel::simulateSIR() {
     //curr.I = next.I /= N;
     //curr.R = next.R /= N;
 
-    for (unsigned long i = 0; i < steps; i++) { // Simulation start
-        //setRestriction();
+    for (unsigned long i = steps; i > 0; i--) { // Simulation start
+        setRestriction();
         dataFile
                 << round(curr.S) << ","
                 << round(curr.I) << ","
                 << round(curr.R) << endl;
         calculateSIR();
+        steps--;
     }
     dataFile.close();
     return 0;
@@ -200,11 +202,12 @@ int sirModel::simulateSEIRD() {
     return 0;
 }
 
+// SIR exp
 void sirModel::exp1() {
-    N = 3600;
+    N = 500000;
 
     curr.I = next.I = 1;
-    rates.beta = 0.1 * 10;
+    rates.beta = rates.betaNative = 0.1 * 30;
     rates.alpha = 0.095;
 
     steps = 100;
@@ -212,41 +215,12 @@ void sirModel::exp1() {
     simulateSIR();
 }
 
+// SIR exp
 void sirModel::exp2() {
-    N = 3600;
-
-    curr.I = next.I = 0;
-    curr.E = next.E = 1;
-    rates.beta = 0.1 * 10; // probability of meeting a new person * number of people that infected person met
-    rates.alpha = 0.095;
-    rates.sigma = 0.143;
-    rates.omega = 0.0034;
-
-    steps = 105;
-
-    simulateSEIRD();
-}
-
-void sirModel::exp3() {
-    N = 5000000;
-
-    curr.I = next.I = 0;
-    curr.E = next.E = 1;
-    rates.beta = 0.1 * 50; // probability of meeting a new person * number of people that infected person met
-    rates.alpha = 0.095;
-    rates.sigma = 0.143;
-    rates.omega = 0.0034;
-
-    steps = 100;
-
-    simulateSEIRD();
-}
-
-void sirModel::exp4() {
     N = 5000000;
 
     curr.I = next.I = 1;
-    rates.beta = 0.1 * 10; // probability of meeting a new person * number of people that infected person met
+    rates.beta = rates.betaNative = 0.1 * 10; // probability of meeting a new person * number of people that infected person met
     rates.alpha = 0.095;
 
     steps = 100;
@@ -254,12 +228,65 @@ void sirModel::exp4() {
     simulateSIR();
 }
 
+// SEIRD exp
+void sirModel::exp3() {
+    N = 3600;
 
-void sirModel::setRestriction(){
-    auto firstLine = N * 0.20;  // 20% of population
+    curr.I = next.I = 0;
+    curr.E = next.E = 1;
+    rates.beta = rates.betaNative = 0.1 * 10; // probability of meeting a new person * number of people that infected person met
+    rates.alpha = 0.095;
+    rates.sigma = 0.143;
+    rates.omega = 0.0034;
 
-    if(curr.I >= firstLine && (!restrictionTook)){
-        rates.alpha *= 1.5;
-        restrictionTook = true;
+    steps = 100;
+
+    simulateSEIRD();rates.beta = rates.betaNative;
+}
+
+// SEIRD exp
+void sirModel::exp4() {
+     N = 5000000;
+
+    curr.I = next.I = 0;
+    curr.E = next.E = 100;
+    rates.beta = rates.betaNative = 0.1 * 10; // probability of meeting a new person * number of people that infected person met
+    rates.alpha = 0.095;
+    rates.sigma = 0.143;
+    rates.omega = 0.0034;
+
+    steps = 100;
+
+    simulateSEIRD();
+}
+
+
+void sirModel::setRestriction() {
+    
+    
+    if(steps % 14 == 0){rates.beta = rates.betaNative; return;}
+
+    
+    rates.beta = rates.betaNative;
+    // restriction4
+    if(curr.I >= N * 0.2){
+        rates.beta = 0.001;
+        return;
     }
+    //restriction3
+    if (curr.I >= N * 0.02) {
+        rates.beta *= 0.5; 
+    }
+    //restriction2
+    if(curr.I >= N * 0.01) {
+        rates.beta *= 0.5;
+    }
+    //restriction1
+    if(curr.I >= N * 0.005) {
+        rates.beta *= 0.6 * 0.25; // facemask interier and closed cinemas/theaters ...
+    }
+}
+
+void sirModel::printInfo() {
+
 }
