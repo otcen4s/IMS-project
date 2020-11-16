@@ -23,7 +23,7 @@ exp1: main
 
 exp2: main
 	./main scenario2
-	python3 plot.py SEIRD
+	python3 plot.py SIR
 
 exp3: main
 	./main scenario3
@@ -31,7 +31,7 @@ exp3: main
 
 exp4: main
 	./main scenario4
-	python3 plot.py SIR
+	python3 plot.py SEIRD
 
 clean:
 	rm -f main *.o

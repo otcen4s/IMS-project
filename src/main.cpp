@@ -7,7 +7,7 @@
  * @date 13. 11. 2020
  */
 
-#include "headers/model.h"
+#include "headers/Model.h"
 
 /**
  * Main simulation function
@@ -17,7 +17,7 @@
  * @return 0 if OK
  */
 int main(int argc, char** argv){
-    sirModel model;
+    Model model;
 
     if (argc == 2) {
         if (strcmp(argv[1],"scenario1") == 0) {

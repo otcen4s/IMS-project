@@ -8,13 +8,11 @@
  * @file model.cpp
  * @date 13. 11. 2020
  */
-#include "headers/model.h"
-#include <cstdlib>
-#include <iostream>
+#include "headers/Model.h"
 
 using namespace std;
 
-void sirModel::print_help() {
+void Model::print_help() {
     std::cout <<
               "-i [infected]             Initial count of infective.\n"
               "-p [population]           Initial count of population.\n"
@@ -29,7 +27,7 @@ void sirModel::print_help() {
     exit(0);
 }
 
-void sirModel::parseArgs(int argc, char **argv) {
+void Model::parseArgs(int argc, char **argv) {
     int opt = 0;
 
     while (true) {
@@ -82,7 +80,7 @@ void sirModel::parseArgs(int argc, char **argv) {
                         rates.sigma = stod(optarg); break;
 
                     case 's': // steps
-                        steps = strtol(optarg, nullptr, 10); break;
+                        days = strtol(optarg, nullptr, 10); break;
 
                     case 'x': // SIR or SEIRD ?
                         if(strtol(optarg, nullptr, 10) == 1) {modelSEIRD = true;} break;
@@ -94,17 +92,18 @@ void sirModel::parseArgs(int argc, char **argv) {
     }
 }
 
-void sirModel::calculateSIR() {
+void Model::calculateSIR() {
     // Calculate new values
     long double rnd = ((double)rand() / RAND_MAX) * 2; // pseudorandom float on <0,2>
     long double newInfected = (rates.beta * curr.S * curr.I * rnd) / N;
 
     if (newInfected > next.S) {
         next.S = 0;
-        next.E += curr.S - (rnd * rates.sigma * curr.E);
+        next.I += curr.S - (rnd * rates.alpha * curr.I);
     } else {
         next.S += -newInfected;
         next.I += newInfected - rnd * rates.alpha * curr.I;
+        stats.sumInfected += newInfected;
     }
     next.R += rnd * rates.alpha * curr.I;
 
@@ -119,7 +118,7 @@ void sirModel::calculateSIR() {
     curr.R = next.R;
 }
 
-void sirModel::calculateSEIRD() {
+void Model::calculateSEIRD() {
     // Calculate new values
     long double rnd = ((double)rand() / RAND_MAX) * 2; // pseudorandom float on <0,2>
     long double newInfected = (rates.beta * curr.S * curr.I * rnd) / N;
@@ -130,6 +129,7 @@ void sirModel::calculateSEIRD() {
     } else {
         next.S += -newInfected;
         next.E += newInfected - (rnd * rates.sigma * curr.E);
+        stats.sumInfected += newInfected;
     }
     next.I += rnd * (rates.sigma * curr.E - rates.alpha * curr.I - rates.omega * curr.I);
     next.R += rnd * rates.alpha * curr.I;
@@ -150,47 +150,72 @@ void sirModel::calculateSEIRD() {
     curr.D = next.D;
 }
 
-int sirModel::simulateSIR() {
-    ofstream dataFile;
+int Model::simulateSIR() {
+    // Everybody who isn't infected can be at the start of an epidemic
+    curr.S = next.S = (N - next.I);
+    stats.sumInfected = next.I;
 
-    dataFile.open(filenames.SIR);
-    dataFile << "S,I,R\n"; // CSV header
-    
-    curr.S = next.S = (N - next.I); // / N;
-    //curr.I = next.I /= N;
-    //curr.R = next.R /= N;
+    printInfo("header", false);
 
-    for (unsigned long i = steps; i > 0; i--) { // Simulation start
-        setRestriction();
-        dataFile
-                << round(curr.S) << ","
-                << round(curr.I) << ","
-                << round(curr.R) << endl;
+    // Handle output file
+    output.open(filenames.SIR);
+    output << "S,I,R\n"; // CSV header
+    for (unsigned long i = 0; i < days; i++) { // Simulation start
+        // Enforce measures
+        if (i % 7 == 0 && restrictions) {
+            rates.beta = rates.betaNative;
+            setRestriction();
+        }
+
+        // Track max infected people (graph spike)
+        if (round(curr.I) > stats.maxInfected) {
+            stats.maxInfected = round(curr.I);
+            stats.dayMaxInfected = i + 1ul;
+        }
+
+        // Track the biggest increment in infected people
+        if (round(derr.I) > stats.maxIncrement) {
+            stats.maxIncrement = round(derr.I);
+            stats.dayMaxIncrement = i + 1ul;
+        }
+
+        output << round(curr.S) << "," << round(curr.I) << "," << round(curr.R) << endl;
         calculateSIR();
-        steps--;
     }
-    dataFile.close();
+
+    printInfo("footer", false);
+    output.close();
     return 0;
 }
 
-int sirModel::simulateSEIRD() {
-    ofstream dataFile;
-
-    dataFile.open(filenames.SEIRD);
-    dataFile << "S,E,I,R,D\n"; // CSV header
-
-    // S + I + E + R + D = 1
+int Model::simulateSEIRD() {
     curr.S = next.S = (N - next.I - next.E); // / N;  // Susceptible = Population - Infected - Exposed
-    // curr.I = next.I /= N;
-    // curr.E = next.E /= N;
-    // curr.R = next.R /= N;
-    // curr.D = next.D /= N;
-    
-    
 
-    for (unsigned long i = 0; i < steps; i++) { // Simulation start
-        setRestriction();
-        dataFile
+    printInfo("header", true);
+
+    // Handle output file
+    output.open(filenames.SEIRD);
+    output << "S,E,I,R,D\n"; // CSV header
+    for (unsigned long i = 0; i < days; i++) { // Simulation start
+        // Enforce measures
+        if (i % 7 == 0 && restrictions) {
+            rates.beta = rates.betaNative;
+            setRestriction();
+        }
+
+        // Track max infected people (graph spike)
+        if (round(curr.I) > stats.maxInfected) {
+            stats.maxInfected = round(curr.I);
+            stats.dayMaxInfected = i + 1ul;
+        }
+
+        // Track the biggest increment in infected people
+        if (round(derr.I) > stats.maxIncrement) {
+            stats.maxIncrement = round(derr.I);
+            stats.dayMaxIncrement = i + 1ul;
+        }
+
+        output
             << round(curr.S) << ","
             << round(curr.E) << ","
             << round(curr.I) << ","
@@ -198,95 +223,111 @@ int sirModel::simulateSEIRD() {
             << round(curr.D) << endl;
         calculateSEIRD();
     }
-    dataFile.close();
+
+    printInfo("footer", true);
+    output.close();
     return 0;
 }
 
 // SIR exp
-void sirModel::exp1() {
-    N = 500000;
+void Model::exp1() {
+    N = 5000000;
 
     curr.I = next.I = 1;
-    rates.beta = rates.betaNative = 0.1 * 30;
+    rates.beta = rates.betaNative = 0.6;
     rates.alpha = 0.095;
-
-    steps = 100;
+    days = 100;
 
     simulateSIR();
 }
 
 // SIR exp
-void sirModel::exp2() {
+void Model::exp2() {
     N = 5000000;
 
     curr.I = next.I = 1;
-    rates.beta = rates.betaNative = 0.1 * 10; // probability of meeting a new person * number of people that infected person met
+    rates.beta = rates.betaNative = 0.6; // probability of meeting a new person * number of people that infected person met
     rates.alpha = 0.095;
+    restrictions = true;
 
-    steps = 100;
+    days = 400;
 
     simulateSIR();
 }
 
 // SEIRD exp
-void sirModel::exp3() {
-    N = 3600;
+void Model::exp3() {
+    N = 5000000;
 
-    curr.I = next.I = 0;
-    curr.E = next.E = 1;
-    rates.beta = rates.betaNative = 0.1 * 10; // probability of meeting a new person * number of people that infected person met
+    curr.I = next.I = 1;
+    rates.beta = rates.betaNative = 0.6; // probability of meeting a new person * number of people that infected person met
     rates.alpha = 0.095;
     rates.sigma = 0.143;
     rates.omega = 0.0034;
 
-    steps = 100;
-
-    simulateSEIRD();rates.beta = rates.betaNative;
-}
-
-// SEIRD exp
-void sirModel::exp4() {
-     N = 5000000;
-
-    curr.I = next.I = 0;
-    curr.E = next.E = 100;
-    rates.beta = rates.betaNative = 0.1 * 10; // probability of meeting a new person * number of people that infected person met
-    rates.alpha = 0.095;
-    rates.sigma = 0.143;
-    rates.omega = 0.0034;
-
-    steps = 100;
+    days = 200;
 
     simulateSEIRD();
 }
 
+// SEIRD exp
+void Model::exp4() {
+     N = 5000000;
 
-void sirModel::setRestriction() {
-    
-    
-    if(steps % 14 == 0){rates.beta = rates.betaNative; return;}
+    curr.I = next.I = 0;
+    curr.E = next.E = 100;
+    rates.beta = rates.betaNative = 0.6; // probability of meeting a new person * number of people that infected person met
+    rates.alpha = 0.095;
+    rates.sigma = 0.143;
+    rates.omega = 0.0034;
+    restrictions = true;
 
-    
-    rates.beta = rates.betaNative;
-    // restriction4
-    if(curr.I >= N * 0.2){
-        rates.beta = 0.001;
-        return;
-    }
-    //restriction3
-    if (curr.I >= N * 0.02) {
-        rates.beta *= 0.5; 
-    }
-    //restriction2
-    if(curr.I >= N * 0.01) {
-        rates.beta *= 0.5;
-    }
-    //restriction1
-    if(curr.I >= N * 0.005) {
-        rates.beta *= 0.6 * 0.25; // facemask interier and closed cinemas/theaters ...
-    }
+    days = 400;
+
+    simulateSEIRD();
 }
 
-void sirModel::printInfo() {
+void Model::setRestriction() {
+    // M4 = only trips to work and for groceries are allowed
+    if (curr.I >= N * 0.05) { rates.beta = 0.001; return; }
 
+    // M3 = masks in exterior
+    if (curr.I >= N * 0.02) { rates.beta *= 0.3; return; }
+
+    // M2 = masks in interior
+    if (curr.I >= N * 0.01) { rates.beta *= 0.5; return; }
+
+    // M1 = closed schools, cinemas
+    if (curr.I >= N * 0.001) { rates.beta *= 0.75; }
+}
+
+void Model::printInfo(const string& which, bool SEIRD) {
+    // Inputs
+    if (which == "header") {
+        cout << "Input: " << endl;
+        cout << "\tPopulation count = " << N << endl;
+        cout << "\tInfected = " << curr.I << endl;
+        if (SEIRD) {
+            cout << "\tExposed = " << curr.E << endl;
+        }
+        cout << "\tTransmission rate = " << rates.beta << endl;
+        cout << "\tRecovery rate = " << rates.alpha << endl;
+        if (SEIRD) {
+            cout << "\tInfectivity = " << rates.sigma << endl;
+            cout << "\tFatality rate = " << rates.omega << endl;
+        }
+        cout << "\tGovernment takes measures = " << (restrictions ? "YES" : "NO") << endl;
+        cout << "\tDays of simulation = " << days << endl;
+    }
+
+    // Outputs
+    if (which == "footer") {
+        cout << "Output: " << endl;
+        cout << "\tSum of all the infected = " << stats.sumInfected << "(" << stats.sumInfected / N * 100 << "%)" << endl;
+        cout << "\tBiggest daily increment = " << stats.maxIncrement << "(" << stats.dayMaxIncrement << ")" << endl;
+        cout << "\tMost infected people at single moment = " << stats.maxInfected << "(" << stats.dayMaxInfected << ")" << endl;
+        if (SEIRD) {
+            cout << "\tDead = " << curr.D << endl;
+        }
+    }
 }
