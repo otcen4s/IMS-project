@@ -234,7 +234,7 @@ void Model::exp1() {
     N = 5000000;
 
     curr.I = next.I = 1;
-    rates.beta = rates.betaNative = 0.6;
+    rates.beta = rates.betaNative = 0.6; // probability of meeting a new person * number of people that infected person met
     rates.alpha = 0.095;
     days = 100;
 
@@ -302,13 +302,15 @@ void Model::setRestriction() {
 }
 
 void Model::printInfo(const string& which, bool SEIRD) {
+    cout << fixed;
+    cout.precision(5);
     // Inputs
     if (which == "header") {
         cout << "Input: " << endl;
-        cout << "\tPopulation count = " << N << endl;
-        cout << "\tInfected = " << curr.I << endl;
+        cout << "\tPopulation count = " << (int)N << endl;
+        cout << "\tInfected = " << (int)round(curr.I) << endl;
         if (SEIRD) {
-            cout << "\tExposed = " << curr.E << endl;
+            cout << "\tExposed = " << (int)round(curr.E) << endl;
         }
         cout << "\tTransmission rate = " << rates.beta << endl;
         cout << "\tRecovery rate = " << rates.alpha << endl;
@@ -323,11 +325,11 @@ void Model::printInfo(const string& which, bool SEIRD) {
     // Outputs
     if (which == "footer") {
         cout << "Output: " << endl;
-        cout << "\tSum of all the infected = " << stats.sumInfected << "(" << stats.sumInfected / N * 100 << "%)" << endl;
-        cout << "\tBiggest daily increment = " << stats.maxIncrement << "(" << stats.dayMaxIncrement << ")" << endl;
-        cout << "\tMost infected people at single moment = " << stats.maxInfected << "(" << stats.dayMaxInfected << ")" << endl;
+        cout << "\tSum of all the infected = " << (int)round(stats.sumInfected) << "(" << stats.sumInfected / N * 100 << "%)" << endl;
+        cout << "\tBiggest daily increment = " << (int)round(stats.maxIncrement) << "(" << stats.dayMaxIncrement << ")" << endl;  // TODO vysvetlit trochu prehladnejise cislo v zatvorke
+        cout << "\tMost infected people at single moment = " << (int)round(stats.maxInfected) << "(" << stats.dayMaxInfected << ")" << endl;  // TODO detto
         if (SEIRD) {
-            cout << "\tDead = " << curr.D << endl;
+            cout << "\tDead = " << (int)round(curr.D) << endl;
         }
     }
 }

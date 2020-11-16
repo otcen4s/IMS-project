@@ -28,7 +28,7 @@ def main(filename: str) -> None:
     # Plotting
     fig, ax = plt.subplots(figsize = (10,10))
     ax.set_xlim(0,len(discrete_steps))
-    #ax.set_ylim(0,)
+    ax.set_ylim(0, S[0] + I[0] + R[0])
 
     ax.plot(discrete_steps, S, label='Susceptible', color='blue',   linewidth=1.5)
     ax.plot(discrete_steps, I, label='Infected',    color='green',  linewidth=1.5)
@@ -41,6 +41,7 @@ def main(filename: str) -> None:
         ax.plot(discrete_steps, D, label='Dead',    color='black',  linewidth=1.5)
 
     ax.set(xlabel='Time(days)', ylabel='Population count', title=model)
+    ax.ticklabel_format(style='plain')
     ax.legend()
     plt.show()
 
