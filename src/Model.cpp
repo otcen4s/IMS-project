@@ -208,19 +208,16 @@ int Model::exp1() {
 }
 
 int Model::exp2() {
-    simulationDays();
     restrictions = true;
     return simulate();
 }
 
 int Model::exp3() {
-    simulationDays();
     SIERD = true;
     return simulate();
 }
 
 int Model::exp4() {
-    simulationDays();
     restrictions = true;
     SIERD = true;
     return simulate();
