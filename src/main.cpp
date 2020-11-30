@@ -17,32 +17,16 @@
  * @return 0 if OK
  */
 int main(int argc, char** argv){
+    // Wrong param count
+    if (argc != 2) { return 1; }
+
+    // Model init, start & end time set and simulations
     Model model;
+    if (strcmp(argv[1],"scenario1") == 0) { return model.performExp(1); }
+    if (strcmp(argv[1],"scenario2") == 0) { return model.performExp(2); }
+    if (strcmp(argv[1],"scenario3") == 0) { return model.performExp(3); }
+    if (strcmp(argv[1],"scenario4") == 0) { return model.performExp(4); }
 
-    if (argc == 2) {
-        if (strcmp(argv[1],"scenario1") == 0) {
-            model.exp1();
-        }
-
-        if (strcmp(argv[1],"scenario2") == 0) {
-            model.exp2();
-        }
-
-        if (strcmp(argv[1],"scenario3") == 0) {
-            model.exp3();
-        }
-
-        if (strcmp(argv[1],"scenario4") == 0) {
-            model.exp4();
-        }
-        
-    } else {
-        model.parseArgs(argc, argv);
-
-        if (model.modelSEIRD) {
-            model.simulateSEIRD();
-        } else {
-            model.simulateSIR();
-        }
-    }
+    // Wrong experiment name
+    return 1;
 }

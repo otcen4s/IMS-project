@@ -16,7 +16,6 @@
  * Include of libraries (C/C++)
  */
 #include <iostream>
-#include <getopt.h>
 #include <string>
 #include <fstream>
 #include <cstring>
@@ -28,14 +27,17 @@
  */
 class Model {
 private:
-    long double N = 0.0;/* Whole population: N = S + I + R (+ E + D) */
+    // Population of chinese province Hubei
+    long double N = 58500000.0;/* Whole population: N = S + I + R (+ E + D) */
 
     // Current values
     struct curr {
         long double
             S = 0.0/* Susceptible */,
-            E = 0.0/* Exposed */,
-            I = 0.0/* Infected*/,
+            // estimated by scientific paper of Mr.Wang the initial
+            // number of exposed is 20 times greater than the number infected
+            E = 20.0/* Exposed */,
+            I = 1.0/* Infected, case 0 */,
             R = 0.0/* Removed */,
             D = 0.0/* Dead */;
     } curr;
@@ -44,38 +46,30 @@ private:
     struct next {
         long double
             S = 0.0/* Susceptible */,
-            E = 0.0/* Exposed */,
-            I = 0.0/* Infected*/,
+            // Estimated by scientific paper of Mr.Wang the initial
+            // number of exposed is 20 times greater than the number infected
+            E = 20.0/* Exposed */,
+            I = 1.0/* Infected, case 0 */,
             R = 0.0/* Removed */,
             D = 0.0/* Dead */;
     } next;
 
-    // Derivatives = next - curr
-    struct derr {
-        long double
-            S = 0.0/* Susceptible */,
-            E = 0.0/* Exposed */,
-            I = 0.0/* Infected*/,
-            R = 0.0/* Removed */,
-            D = 0.0/* Dead */;
-    } derr;
-
-    // Coefficients for calculations
+    // Constants typical for COVID19
     struct rates {
         long double
-            beta  = 0.0/* Transmission: how often a susceptible-infected contact results in a new infection */,
-            alpha = 0.0/* Recovery: infected recovers and moves into the resistant phase */,
-            sigma = 0.0/* Infectivity: exposed person becomes infective */,
-            omega = 0.0/* Fatality: infected person dies */,
-            betaNative = 0.0/* Initial value of beta */,
-            R0 = 0.0;/* Basic reproduction number of disease */
-    } rates;
+            R0 = 6.0,/* Basic reproduction number of disease */
 
-    // Output files
-    struct filenames {
-        std::string SIR = "statistics/data_SIR.csv";
-        std::string SEIRD = "statistics/data_SEIRD.csv";
-    } filenames;
+            // hospitalization period^(-1) -> hospitalization period was estimated as 18 days
+            alpha = 0.0556/* Recovery: infected recovers and moves into the resistant phase */,
+
+            // R0 * alpha -> R0 is initial basic infection-reproduction number and alpha is recovery rate
+            beta  = 0.0556 * 6.0/* Transmission: how often a susceptible-infected contact results in a new infection */,
+
+            // mean incubation period^(-1) -> mean incubation period is set to 5.2 days
+            sigma = 0.1923/* Infectivity: exposed person becomes infective */,
+
+            omega = 0.0034/* Fatality: infected person dies */;
+    } rates;
 
     // Statistical values we are going to track
     struct stats {
@@ -83,113 +77,77 @@ private:
         unsigned long dayMaxInfected = 0, dayMaxIncrement = 0;
     } stats;
 
-    unsigned long days = 0;/* number of days of simulation */
-    bool restrictions = false;/* government measures */
-    std::ofstream output;
+    // Daily change of infected people
+    long double derrI = 0.0/* Infected*/;
 
-public:
-    bool modelSEIRD = false;
-
-    /**
-     * Function prints help guide to stdout and terminates the program successfully
-     */
-    void print_help();
+    bool SIERD = false/* Simulation model */;
+    unsigned long days = 0;/* Number of days of simulation */
+    bool restrictions = false;/* Government measures */
+    std::ofstream output/* Data file */;
 
     /**
-     * Function parses the given arguments from stdin using getopt
-     */
-    void parseArgs(int argc, char **argv);
-
-    /**
-     * Simulation of an epidemic based on SIR model:
-     *  dS = - S * I * alpha
-     *  dI = S * I * alpha - alpha * I
-     *  dR = alpha * I
-     *
-     *  dS + dI + dR = 0 (Changes have to match)
-     *  S + I + R = N (Entire population)
-     */
-    void calculateSIR();
-
-    /**
-     * S + E + I + R + D = N (Entire population)
-     * Results of ordinary differential equations for S, E, I, R, D values at every time point of the simulation
-     */
-    void calculateSEIRD();
-
-    /**
-     * Simulation of SIR model
+     * Simulation
      *
      * @return 0 if OK
      */
-    int simulateSIR();
+    int simulate();
 
     /**
-     * Simulation of SEIRD model
-     *
-     * @return 0 if OK
+     * Calculates nest step of a simulation based on differential equations
      */
-    int simulateSEIRD();
-
-    /**
-     * Demonstrates epidemic with no measures (SIR)
-     *
-     * Population = 5 000 000
-     * Infected = 1
-     * Transmission rate = 0.6
-     * Recovery rate = 0.095
-     * Restrictions = YES
-     *
-     * Days = 100
-     */
-    void exp1();
-
-    /**
-     * Demonstrates epidemic with government measures (SIR)
-     *
-     * Population = 5 000 000
-     * Infected = 1
-     * Transmission rate = 0.6
-     * Recovery rate = 0.095
-     * Restrictions = YES
-     *
-     * Days = 400
-     */
-    void exp2();
-
-    /**
-     * Third experiment, demonstrates epidemic with no measures (SEIRD)
-     */
-    void exp3();
-
-    /**
-     * Fourth experiment, demonstrates epidemic with measures (SEIRD)
-     */
-    void exp4();
-
-    /**
-     * Depending on current amount of infected people there are multiple measures that can be taken, each of them
-     * reduces transmission rate
-     *
-     * M1 = closed schools, cinemas (25% reduction)
-     * M2 = masks in interior (50% reduction)
-     * M3 = masks in exterior (70% reduction)
-     * M4 = only trips to work and for groceries are allowed (almost 100% reduction)
-     */
-    void setRestriction();
-
-    /**
-     * Output information about simulation to stdout
-     *
-     * @param which "header" => input info, "footer" => output info
-     * @param SEIRD true => model is of type SEIRD, false => model is of type SIR
-     */
-    void printInfo(const std::string& which, bool SEIRD);
+    void nextStep();
 
     /**
      * Counts the date difference between 31.12.2019 until 1.12.2020
      */
-    int simulationDays();
+    void simulationDays();
+
+    /**
+     * Outputs initial conditions to stdout
+     */
+    void printHeader();
+
+    /**
+     * Outputs simulations results to stdout
+     */
+    void printFooter();
+
+    /**
+     * Simulates epidemic with no measures (SIR)
+     *
+     * @return 0 if OK
+     */
+    int exp1();
+
+    /**
+     * Simulates epidemic with government measures (SIR)
+     *
+     * @return 0 if OK
+     */
+    int exp2();
+
+    /**
+     * Simulates epidemic with no measures (SIERD)
+     *
+     * @return 0 if OK
+     */
+    int exp3();
+
+    /**
+     * Simulates epidemic with measures (SIERD)
+     *
+     * @return 0 if OK
+     */
+    int exp4();
+
+public:
+    /**
+     * Wraps days calculation and experiment
+     *
+     * @param num experiment number
+     * @return 0 if OK
+     */
+    int performExp(int num);
 };
 
 #endif //_MAIN_H_
