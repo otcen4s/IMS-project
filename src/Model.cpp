@@ -120,20 +120,22 @@ void Model::calculateSIR() {
 
 void Model::calculateSEIRD() {
     // Calculate new values
-    long double rnd = ((double)rand() / RAND_MAX) * 2; // pseudorandom float on <0,2>
-    long double newInfected = (rates.beta * curr.S * curr.I * rnd) / N;
+    // long double rnd = ((double)rand() / RAND_MAX) * 2; // pseudorandom float on <0,2>
+    long double newInfected = (rates.beta * curr.S * curr.I) / N;
 
     if (newInfected > next.S) {
         next.S = 0;
-        next.E += curr.S - (rnd * rates.sigma * curr.E);
+        next.E += curr.S - ( rates.sigma * curr.E);
     } else {
         next.S += -newInfected;
-        next.E += newInfected - (rnd * rates.sigma * curr.E);
+        next.E += newInfected - (rates.sigma * curr.E);
         stats.sumInfected += newInfected;
     }
-    next.I += rnd * (rates.sigma * curr.E - rates.alpha * curr.I - rates.omega * curr.I);
-    next.R += rnd * rates.alpha * curr.I;
-    next.D += rnd * rates.omega * curr.I;
+    next.I += (rates.sigma * curr.E - rates.alpha * curr.I - rates.omega * curr.I);
+    next.R +=  rates.alpha * curr.I;
+    next.D += rates.omega * curr.I;
+
+    stats.sumRecovered += rates.alpha * curr.I;
 
     // Calculate change in current step
     derr.S = next.S - curr.S;
@@ -189,18 +191,42 @@ int Model::simulateSIR() {
 }
 
 int Model::simulateSEIRD() {
-    curr.S = next.S = (N - next.I - next.E); // / N;  // Susceptible = Population - Infected - Exposed
+    curr.S = next.S = (N - next.I - next.E);  // Susceptible = Population - Infected - Exposed
+    stats.sumInfected = next.I;
 
     printInfo("header", true);
 
     // Handle output file
     output.open(filenames.SEIRD);
-    output << "S,E,I,R,D\n"; // CSV header
+    output << "S,E,I,R,D,Isum,Rsum\n"; // CSV header
     for (unsigned long i = 0; i < days; i++) { // Simulation start
         // Enforce measures
-        if (i % 7 == 0 && restrictions) {
-            rates.beta = rates.betaNative;
-            setRestriction();
+        // if (i % 7 == 0 && restrictions) {
+        //     rates.beta = rates.betaNative;
+        //     setRestriction();
+        // }
+        
+        // China province Hubei took drastic government measures in January 23rd with all cities quarantined
+        // Basic reproduction number(R0) according to studies dropped under 1
+        // Approximately after the 2 months of Covid19 spreadin Hubei, China took restrections 
+        
+       
+        // if(i == 60){
+        //     rates.R0 = 0.8;
+        //     rates.beta = rates.alpha * rates.R0;
+       // }
+
+        if(i == 60 && restrictions){
+            rates.R0 = 0.8;
+            rates.beta = rates.alpha * rates.R0;
+        }
+        if(i == 23 && restrictions){
+            rates.R0 = 6.6037;
+            rates.beta = rates.alpha * rates.R0;
+        }
+         if(i == 27 && restrictions){
+            rates.R0 = 3.7732;
+            rates.beta = rates.alpha * rates.R0;
         }
 
         // Track max infected people (graph spike)
@@ -220,7 +246,9 @@ int Model::simulateSEIRD() {
             << round(curr.E) << ","
             << round(curr.I) << ","
             << round(curr.R) << ","
-            << round(curr.D) << endl;
+            << round(curr.D) << ","
+            << round(stats.sumInfected) << ","
+            << round(stats.sumRecovered) << endl;
         calculateSEIRD();
     }
 
@@ -236,7 +264,8 @@ void Model::exp1() {
     curr.I = next.I = 1;
     rates.beta = rates.betaNative = 0.6; // probability of meeting a new person * number of people that infected person met
     rates.alpha = 0.095;
-    days = 100;
+    
+    days = simulationDays();
 
     simulateSIR();
 }
@@ -250,39 +279,43 @@ void Model::exp2() {
     rates.alpha = 0.095;
     restrictions = true;
 
-    days = 400;
+    days = simulationDays();
 
     simulateSIR();
 }
 
 // SEIRD exp
 void Model::exp3() {
-    N = 5000000;
+    N = 58500000;
 
     curr.I = next.I = 1;
-    rates.beta = rates.betaNative = 0.6; // probability of meeting a new person * number of people that infected person met
-    rates.alpha = 0.095;
-    rates.sigma = 0.143;
+    curr.E = next.E = 20 * curr.I; // estimated by scientific paper of Mr.Wang the initial number of exposed is 20 times greater than the number infected
+    rates.R0 = 6;
+    rates.alpha = 0.0556; // 1 / hospitalization period -> hospitalization period was estimated as 18 days
+    rates.beta = rates.betaNative = rates.alpha * rates.R0; // R0 * alpha -> R0 is initial basic infection-reproduction number and aplha is recovery rate
+    rates.sigma = 0.1923; // 1 / mean incubation period -> mean incubation period is set to 5.2 days
     rates.omega = 0.0034;
 
-    days = 200;
+    days = simulationDays();
 
     simulateSEIRD();
 }
 
 // SEIRD exp
 void Model::exp4() {
-     N = 5000000;
-
-    curr.I = next.I = 0;
-    curr.E = next.E = 100;
-    rates.beta = rates.betaNative = 0.6; // probability of meeting a new person * number of people that infected person met
-    rates.alpha = 0.095;
-    rates.sigma = 0.143;
-    rates.omega = 0.0034;
     restrictions = true;
+    
+    N = 58500000;
 
-    days = 400;
+    curr.I = next.I = 1;
+    curr.E = next.E = 20 * curr.I; // estimated by scientific paper of Mr.Wang
+    rates.R0 = 6;
+    rates.alpha = 0.0556; // 1 / hospitalization period -> hospitalization period was estimated as 18 days
+    rates.beta = rates.betaNative = rates.alpha * rates.R0; // R0 * alpha -> R0 is initial basic infection-reproduction number and aplha is recovery rate
+    rates.sigma = 0.1923; // 1 / mean incubation period -> mean incubation period is set to 5.2 days
+    rates.omega = 0.0034;
+
+    days = simulationDays();
 
     simulateSEIRD();
 }
@@ -301,17 +334,44 @@ void Model::setRestriction() {
     if (curr.I >= N * 0.001) { rates.beta *= 0.75; }
 }
 
+int Model::simulationDays() {
+    const int monthDays[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+
+    // start of Covid19 in chinese province Hubei
+    int yearStart = 2019;
+    int monthStart = 12;
+    int dayStart = 31;
+
+    // simulating until
+    int yearEnd = 2020;
+    int monthEnd = 12;
+    int dayEnd = 1;
+
+    auto n1 = yearStart * 365 + dayStart;
+    for (int i = 0; i < monthStart - 1; i++) n1 += monthDays[i];
+
+    auto n2 = yearEnd * 365 + dayEnd;
+    for (int i = 0; i < monthEnd - 1; i++) n2 += monthDays[i];
+
+    return (n2 - n1);
+}
+
 void Model::printInfo(const string& which, bool SEIRD) {
     cout << fixed;
     cout.precision(5);
     // Inputs
     if (which == "header") {
+        cout << endl;
+        cout << "------------------------------------------------------------------------------------------" << endl;
+        cout << "|Simulation of SIR and SEIRD epidemic models of COVID19 disease in chinese province Hubei|" << endl;
+        cout << "------------------------------------------------------------------------------------------" << endl << endl;
         cout << "Input: " << endl;
         cout << "\tPopulation count = " << (int)N << endl;
         cout << "\tInfected = " << (int)round(curr.I) << endl;
         if (SEIRD) {
             cout << "\tExposed = " << (int)round(curr.E) << endl;
         }
+        cout << "\tBasic reproduction number of COVID19 = " << rates.R0 << endl;
         cout << "\tTransmission rate = " << rates.beta << endl;
         cout << "\tRecovery rate = " << rates.alpha << endl;
         if (SEIRD) {
@@ -319,17 +379,25 @@ void Model::printInfo(const string& which, bool SEIRD) {
             cout << "\tFatality rate = " << rates.omega << endl;
         }
         cout << "\tGovernment takes measures = " << (restrictions ? "YES" : "NO") << endl;
-        cout << "\tDays of simulation = " << days << endl;
+        cout << "\tFirst reported COVID19 case was in 31 December 2019" << endl;
+        cout << "\tDays of simulation until now = " << days << endl;
     }
 
     // Outputs
     if (which == "footer") {
         cout << "Output: " << endl;
-        cout << "\tSum of all the infected = " << (int)round(stats.sumInfected) << "(" << stats.sumInfected / N * 100 << "%)" << endl;
-        cout << "\tBiggest daily increment = " << (int)round(stats.maxIncrement) << "(" << stats.dayMaxIncrement << ")" << endl;  // TODO vysvetlit trochu prehladnejise cislo v zatvorke
-        cout << "\tMost infected people at single moment = " << (int)round(stats.maxInfected) << "(" << stats.dayMaxInfected << ")" << endl;  // TODO detto
+        cout << "\tSum of all the recovered = " << (int)round(stats.sumRecovered) << "(" << stats.sumRecovered / N * 100 << "% of total population of Hubei)" << endl;
+        cout << "\tSum of all the infected = " << (int)round(stats.sumInfected) << "(" << stats.sumInfected / N * 100 << "% of total population of Hubei)" << endl;
+        cout << "\tBiggest daily increment = " << (int)round(stats.maxIncrement) << "(day No. " << stats.dayMaxIncrement << ")" << endl;  // TODO vysvetlit trochu prehladnejise cislo v zatvorke
+        cout << "\tMost infected people at single moment = " << (int)round(stats.maxInfected) << "(day No. " << stats.dayMaxInfected << ")" << endl;  // TODO detto
+        if(restrictions) {
+            cout << "\tBasic reproduction number of COVID19 dropped to : "<< rates.R0 << endl;
+        }
         if (SEIRD) {
             cout << "\tDead = " << (int)round(curr.D) << endl;
         }
+        cout << "------------------------------------------------------------------------------------------" << endl;
+        cout << "|########################################################################################|" << endl;
+        cout << "------------------------------------------------------------------------------------------" << endl << endl;
     }
 }

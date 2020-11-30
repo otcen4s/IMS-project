@@ -22,6 +22,8 @@ Linky:
 [Zaujimavy odkaz 9](https://www.youtube.com/watch?v=yRxe-QycdUE)<br/>
 https://natureofcode.com/book/chapter-7-cellular-automata/<br/>
 https://mathinsight.org/discrete_sir_infectious_disease_model</br>
+https://github.com/coronafighter/coronaSEIR/blob/master/main_coronaSEIR.py</br>
+https://github.com/halessi/Covid19_Model</br>
 
 Poznatky:
 

@@ -67,7 +67,8 @@ private:
             alpha = 0.0/* Recovery: infected recovers and moves into the resistant phase */,
             sigma = 0.0/* Infectivity: exposed person becomes infective */,
             omega = 0.0/* Fatality: infected person dies */,
-            betaNative = 0.0;/* Initial value of beta */
+            betaNative = 0.0/* Initial value of beta */,
+            R0 = 0.0;/* Basic reproduction number of disease */
     } rates;
 
     // Output files
@@ -78,7 +79,7 @@ private:
 
     // Statistical values we are going to track
     struct stats {
-        long double maxInfected = 0.0, maxIncrement = 0.0, sumInfected = 0.0;
+        long double maxInfected = 0.0, maxIncrement = 0.0, sumInfected = 0.0, sumRecovered = 0.0;
         unsigned long dayMaxInfected = 0, dayMaxIncrement = 0;
     } stats;
 
@@ -184,6 +185,11 @@ public:
      * @param SEIRD true => model is of type SEIRD, false => model is of type SIR
      */
     void printInfo(const std::string& which, bool SEIRD);
+
+    /**
+     * Counts the date difference between 31.12.2019 until 1.12.2020
+     */
+    int simulationDays();
 };
 
 #endif //_MAIN_H_
