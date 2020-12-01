@@ -34,13 +34,14 @@ int Model::simulate() {
             rates.beta = rates.alpha * rates.R0;
         }
 
-        // China province Hubei took drastic government measures in January 23rd with all cities quarantined
+        // China province Hubei took drastic government measures in January 27th with all cities quarantined
         if(i == simulationDays(2020, 1, 27) && restrictions){ // 27.1.2020
             rates.R0 = 3.7732;
             rates.beta = rates.alpha * rates.R0;
         }
 
-        // Approximately after 12th February Covid19 spreading in Hubei was postponed due to radical lockdown of the province and large-scale case-screening 
+        // Approximately after 12th February Covid19 spreading in Hubei was postponed
+        // due to radical lockdown of the province and large-scale case-screening
         // Basic reproduction number(R0) according to studies dropped to 0.2020
         if(i == simulationDays(2020, 2, 12) && restrictions){
             rates.R0 = 0.2020;
