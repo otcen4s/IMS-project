@@ -27,7 +27,10 @@ def main(filename: str) -> None:
     S = df['S'] # Susceptible
     I = df['I'] # Infected
     R = df['R'] # Removed
+    E = list() # Exposed
+    D = list() # Dead
     Isum = df['Isum'] # Total sum of infected
+    Rsum = df['Rsum'] # Total sum of recovered
 
     # Plotting
     fig, ax = plt.subplots(figsize = (10,10))
@@ -43,21 +46,14 @@ def main(filename: str) -> None:
         D = df['D'] # Dead
         ax.plot(discrete_steps, E, label='Exposed', color='yellow', linewidth=1.5)
         ax.plot(discrete_steps, D, label='Dead',    color='black',  linewidth=1.5)
-        Rsum = df['Rsum'] # Total sum of recovered
+        
 
     ax.set(xlabel='Time(days)', ylabel='Population count', title=model+" model simulation of COVID19 in Hubei")
     ax.ticklabel_format(style='plain')
     ax.legend()
     plt.show()
-
-    if model == "SEIRD":
-        dead_or_infected(S, Isum, Rsum, D, discrete_steps)
-    else:
-        fig, ax = plt.subplots(figsize = (10,10))
-        ax.plot(discrete_steps, Isum, label='Infected',    color='green',  linewidth=1.5)
-        ax.ticklabel_format(style='plain')
-        ax.legend()
-        plt.show()
+    
+    dead_or_infected(S, Isum, Rsum, D, discrete_steps)
     without_susceptible(E, I ,R, D, discrete_steps)
 
 
@@ -69,12 +65,12 @@ def dead_or_infected(S, Isum, Rsum, D, discrete_steps):
 
     if model == "SEIRD":
         ax.set_ylim(0, max(D) * 2 + max(Rsum))
-        ax.plot(discrete_steps, D, label='Dead',    color='black',  linewidth=1.5)
+        ax.plot(discrete_steps, D, label='Dead(sum of all days)',    color='black',  linewidth=1.5)
     else:
          ax.set_ylim(0, max(Isum) + max(Rsum))
 
-    ax.plot(discrete_steps, Isum, label='Infected',    color='green',  linewidth=1.5)
-    ax.plot(discrete_steps, Rsum, label='Recovered',   color='orange', linewidth=1.5)
+    ax.plot(discrete_steps, Isum, label='Infected(sum of all days)',    color='green',  linewidth=1.5)
+    ax.plot(discrete_steps, Rsum, label='Recovered(sum of all days)',   color='orange', linewidth=1.5)
 
     ax.set(xlabel='Time(days)', ylabel='Population count', title=model+" model simulation of COVID19 in Hubei")
     ax.ticklabel_format(style='plain')
@@ -98,7 +94,6 @@ def without_susceptible(E, I, R, D, discrete_steps):
     ax.ticklabel_format(style='plain')
     ax.legend()
     plt.show()
-
 
 
 if __name__ == '__main__':

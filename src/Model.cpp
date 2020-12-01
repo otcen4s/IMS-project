@@ -23,13 +23,13 @@ int Model::simulate() {
     if (SIERD) {
         output << "S,E,I,R,D,Isum,Rsum\n";
     } else {
-        output << "S,I,R,Isum\n";
+        output << "S,I,R,Isum,Rsum\n";
     }
 
     // Simulation start
     for (unsigned long i = 0; i < days; i++) {
         // Chinese new year celebration epidemic spot
-        if(i == simulationDays(2020, 1, 23) && restrictions){ // 23.1.2020
+        if(i == simulationDays(2020, 1, 23)){ // 23.1.2020
             rates.R0 = 6.6037;
             rates.beta = rates.alpha * rates.R0;
         }
@@ -74,7 +74,8 @@ int Model::simulate() {
                 << round(curr.S) << ","
                 << round(curr.I) << ","
                 << round(curr.R) << ","
-                << round(stats.sumInfected) << endl;
+                << round(stats.sumInfected) << ","
+                << round(stats.sumRecovered) << endl;
             nextStep();
         }
     }
@@ -165,7 +166,7 @@ void Model::printHeader() {
     }
     cout << "\tGovernment takes measures = " << (restrictions ? "YES" : "NO") << endl;
     cout << "\tFirst reported COVID19 case was in 31 December 2019" << endl;
-    cout << "\tDays of simulation until now = " << days << endl;
+    cout << "\tDays of simulation until 7 December 2020 = " << days << endl;
 }
 
 void Model::printFooter() {
