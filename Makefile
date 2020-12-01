@@ -33,6 +33,12 @@ exp4: main
 	./main scenario4
 	python3 plot.py SEIRD
 
+run: main
+	./main scenario1
+	./main scenario2
+	./main scenario3
+	./main scenario4
+
 clean:
 	rm -f main *.o
 	
