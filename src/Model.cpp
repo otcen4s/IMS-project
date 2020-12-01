@@ -29,21 +29,21 @@ int Model::simulate() {
     // Simulation start
     for (unsigned long i = 0; i < days; i++) {
         // Chinese new year celebration epidemic spot
-        if(i == 23 && restrictions){
+        if(i == simulationDays(2020, 1, 23) && restrictions){ // 23.1.2020
             rates.R0 = 6.6037;
             rates.beta = rates.alpha * rates.R0;
         }
 
         // China province Hubei took drastic government measures in January 23rd with all cities quarantined
-        if(i == 27 && restrictions){
+        if(i == simulationDays(2020, 1, 27) && restrictions){ // 27.1.2020
             rates.R0 = 3.7732;
             rates.beta = rates.alpha * rates.R0;
         }
 
-        // Approximately after the 2 months of Covid19 spreading Hubei, China took restrictions
-        // Basic reproduction number(R0) according to studies dropped under 1
-        if(i == 60 && restrictions){
-            rates.R0 = 0.8;
+        // Approximately after 12th February Covid19 spreading in Hubei was postponed due to radical lockdown of the province and large-scale case-screening 
+        // Basic reproduction number(R0) according to studies dropped to 0.2020
+        if(i == simulationDays(2020, 2, 12) && restrictions){
+            rates.R0 = 0.2020;
             rates.beta = rates.alpha * rates.R0;
         }
 
@@ -126,7 +126,7 @@ void Model::nextStep() {
     curr.R = next.R;
 }
 
-void Model::simulationDays() {
+unsigned long Model::simulationDays(int yearEnd, int monthEnd, int dayEnd) {
     const int monthDays[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
 
     // start of Covid19 in chinese province Hubei
@@ -135,17 +135,13 @@ void Model::simulationDays() {
     int dayStart = 31;
 
     // simulating until
-    int yearEnd = 2020;
-    int monthEnd = 12;
-    int dayEnd = 1;
-
     auto n1 = yearStart * 365 + dayStart;
     for (int i = 0; i < monthStart - 1; i++) n1 += monthDays[i];
 
     auto n2 = yearEnd * 365 + dayEnd;
     for (int i = 0; i < monthEnd - 1; i++) n2 += monthDays[i];
 
-    days = n2 - n1;
+    return (n2 - n1);
 }
 
 void Model::printHeader() {
@@ -160,7 +156,7 @@ void Model::printHeader() {
     if (SIERD) {
         cout << "\tExposed = " << (int)round(curr.E) << endl;
     }
-    cout << "\tBasic reproduction number of COVID19 = " << rates.R0 << endl;
+    cout << "\tBasic reproduction number(R0) of COVID19 = " << rates.R0 << endl;
     cout << "\tTransmission rate = " << rates.beta << endl;
     cout << "\tRecovery rate = " << rates.alpha << endl;
     if (SIERD) {
@@ -193,7 +189,7 @@ void Model::printFooter() {
         << "(day No. " << stats.dayMaxInfected << ")" << endl;
 
     if(restrictions) {
-        cout << "\tBasic reproduction number of COVID19 dropped to : "<< rates.R0 << endl;
+        cout << "\tBasic reproduction number(R0) of COVID19 dropped to : "<< rates.R0 << endl;
     }
     if (SIERD) {
         cout << "\tDead = " << (int)round(curr.D) << endl;
@@ -224,7 +220,7 @@ int Model::exp4() {
 }
 
 int Model::performExp(int num) {
-    simulationDays();
+    days = simulationDays(2020, 12, 7);
     switch (num) {
         case 1:
             return exp1();

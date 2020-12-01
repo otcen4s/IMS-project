@@ -58,6 +58,7 @@ def main(filename: str) -> None:
         ax.ticklabel_format(style='plain')
         ax.legend()
         plt.show()
+    without_susceptible(E, I ,R, D, discrete_steps)
 
 
 def dead_or_infected(S, Isum, Rsum, D, discrete_steps):
@@ -80,19 +81,24 @@ def dead_or_infected(S, Isum, Rsum, D, discrete_steps):
     ax.legend()
     plt.show()
 
-# def set_max(I, discrete_steps):
-#     max_val = max(I)
-#     max_hit = False
-#     out = list()
-#     for i in range(len(discrete_steps)):
-#         if max_val == I[i]:
-#             max_hit = True
-        
-#         if max_hit:
-#             out.append(max_val + I[i])
-#         else:
-#             out.append(I[i])
-#     return out
+def without_susceptible(E, I, R, D, discrete_steps):
+    # Plotting
+    fig, ax = plt.subplots(figsize = (10,10))
+    ax.set_xlim(0,len(discrete_steps))
+    ax.set_ylim(0,  max(I) + max(R))
+
+    ax.plot(discrete_steps, I, label='Infected',    color='green',  linewidth=1.5)
+    ax.plot(discrete_steps, R, label='Recovered',   color='orange', linewidth=1.5)
+
+    if model == "SEIRD":
+        ax.plot(discrete_steps, E, label='Exposed', color='yellow', linewidth=1.5)
+        ax.plot(discrete_steps, D, label='Dead',    color='black',  linewidth=1.5)
+
+    ax.set(xlabel='Time(days)', ylabel='Population count', title=model+" model simulation of COVID19 in Hubei")
+    ax.ticklabel_format(style='plain')
+    ax.legend()
+    plt.show()
+
 
 
 if __name__ == '__main__':

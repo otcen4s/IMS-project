@@ -36,8 +36,8 @@ private:
             S = 0.0/* Susceptible */,
             // estimated by scientific paper of Mr.Wang the initial
             // number of exposed is 20 times greater than the number infected
-            E = 20.0/* Exposed */,
-            I = 1.0/* Infected, case 0 */,
+            E = 27 * 20.0/* Exposed */,
+            I = 27.0/* Infected, case 0 */,
             R = 0.0/* Removed */,
             D = 0.0/* Dead */;
     } curr;
@@ -48,8 +48,8 @@ private:
             S = 0.0/* Susceptible */,
             // Estimated by scientific paper of Mr.Wang the initial
             // number of exposed is 20 times greater than the number infected
-            E = 20.0/* Exposed */,
-            I = 1.0/* Infected, case 0 */,
+            E = 27 * 20.0/* Exposed */,
+            I = 27.0/* Infected, case 0 */,
             R = 0.0/* Removed */,
             D = 0.0/* Dead */;
     } next;
@@ -57,13 +57,13 @@ private:
     // Constants typical for COVID19
     struct rates {
         long double
-            R0 = 6.0,/* Basic reproduction number of disease */
+            R0 = 5.6015,/* Basic reproduction number of disease */
 
             // hospitalization period^(-1) -> hospitalization period was estimated as 18 days
             alpha = 0.0556/* Recovery: infected recovers and moves into the resistant phase */,
 
             // R0 * alpha -> R0 is initial basic infection-reproduction number and alpha is recovery rate
-            beta  = 0.0556 * 6.0/* Transmission: how often a susceptible-infected contact results in a new infection */,
+            beta  = 0.0556 * 5.6015/* Transmission: how often a susceptible-infected contact results in a new infection */,
 
             // mean incubation period^(-1) -> mean incubation period is set to 5.2 days
             sigma = 0.1923/* Infectivity: exposed person becomes infective */,
@@ -98,9 +98,9 @@ private:
     void nextStep();
 
     /**
-     * Counts the date difference between 31.12.2019 until 1.12.2020
+     * Counts the date difference
      */
-    void simulationDays();
+    unsigned long simulationDays(int yearEnd, int monthEnd, int dayEnd);
 
     /**
      * Outputs initial conditions to stdout
